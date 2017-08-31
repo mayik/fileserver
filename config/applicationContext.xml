@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:jaxws="http://cxf.apache.org/jaxws"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/context
+           http://www.springframework.org/schema/context/spring-context.xsd
+           http://www.springframework.org/schema/tx
+           http://www.springframework.org/schema/tx/spring-tx.xsd
+           http://www.springframework.org/schema/aop
+           http://www.springframework.org/schema/aop/spring-aop.xsd
+           http://cxf.apache.org/jaxws
+           http://cxf.apache.org/schemas/jaxws.xsd">
+           
+        <import resource="classpath:META-INF/cxf/cxf.xml"/>
+	    <import resource="classpath:META-INF/cxf/cxf-extension-soap.xml"/>
+	    <import resource="classpath:META-INF/cxf/cxf-servlet.xml"/>
+
+		<context:component-scan base-package="com.fileserver" />
+		
+		<context:property-placeholder location="classpath:jdbc.properties"/>
+		
+		<bean id="c3p0DataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource" destroy-method="close">
+			<property name="driverClass" value="${mysql.driverClassName}"/>
+		    <property name="jdbcUrl" value="${mysql.jdbc.url}"/>
+		    <property name="user" value="${mysql.jdbc.username}"/>
+		    <property name="password" value="${mysql.jdbc.password}"/>
+		    <property name="initialPoolSize" value="${pool.initialPoolSize}" />
+			<property name="minPoolSize" value="${pool.minPoolSize}" />
+			<property name="maxPoolSize" value="${pool.maxPoolSize}" />
+			<property name="maxIdleTime" value="${pool.maxIdleTime}" />
+			<property name="acquireIncrement" value="${pool.acquireIncrement}" />
+			<property name="checkoutTimeout" value="${pool.checkoutTimeout}" />
+			<property name="maxIdleTimeExcessConnections" value="${pool.maxIdleTimeExcessConnections}" />
+		</bean>
+		
+		<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+			<property name="dataSource" ref="c3p0DataSource" />
+			<property name="configLocation" value="classpath:mybatis.cfg.xml"/>
+			<property name="mapperLocations" value="classpath*:mybatis/**/*.xml" />
+		</bean>
+		<bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate">
+			<constructor-arg index="0" ref="sqlSessionFactory"/>
+		</bean>
+		
+		<bean id="txManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+			<property name="dataSource" ref="c3p0DataSource" />
+		</bean>
+		
+		<tx:advice id="txAdvice" transaction-manager="txManager">
+			<tx:attributes>
+				<tx:method name="get*" read-only="true"/>
+				<tx:method name="is*" read-only="true"/>
+				<tx:method name="*"/>
+			</tx:attributes> 
+		</tx:advice>
+		
+		<aop:config>
+			<aop:pointcut expression="execution(* com.fileserver.service.*..*(..))" id="bizMethods"/>
+			<aop:advisor advice-ref="txAdvice" pointcut-ref="bizMethods"/>
+		</aop:config>
+	    
+	   <!--  <jaxws:endpoint id="greeter" implementor="#tppiService" address="/tppi" /> -->
+		
+</beans>

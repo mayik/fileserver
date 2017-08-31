@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:mvc="http://www.springframework.org/schema/mvc"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/mvc
+        http://www.springframework.org/schema/mvc/spring-mvc.xsd">
+
+	 <mvc:annotation-driven conversion-service="conversionService">
+    	<mvc:message-converters>
+    		<bean class="org.springframework.http.converter.ByteArrayHttpMessageConverter" />
+    		<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+    			<property name="supportedMediaTypes">
+    				<list>
+    					<value>text/html;charset=UTF-8</value>
+    				</list>
+    			</property>
+    		</bean>
+    	</mvc:message-converters>
+    </mvc:annotation-driven>
+    
+	<bean class="org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor" />
+    
+    <bean id="SpringUtils" class="com.fileserver.commons.utils.SpringUtils" />
+    
+    <!-- 配置不被拦截资源 -->
+    <mvc:resources location="/scripts/" mapping="/scripts/**"/>
+    <mvc:resources location="/images/" mapping="/images/**"/>
+    <mvc:resources location="/upload/" mapping="/upload/**"/>
+    <mvc:resources location="/resources/" mapping="/resources/**"/>
+    
+    <!-- 配置路由 -->
+    <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+    	<property name="prefix" value="/WEB-INF/views/" />
+    	<property name="suffix" value=".jsp" />
+    </bean>
+    
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+    	<property name="converters">   
+             <list>   
+                 <bean class="com.fileserver.converter.DateConverter"/>   
+             </list>   
+         </property> 
+    </bean>
+    
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="messageConverters">
+			<list>
+				<bean class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter"/>
+			</list>
+		</property>
+	</bean>
+	
+	<!-- 配置文件上传的 -->
+	<bean id="multipartResolver" class="com.fileserver.commons.utils.MyCommonsMultipartResolver">
+		<!-- 设置上传文件的最大尺寸为300MB -->  
+	    <property name="maxUploadSize">  
+	        <value>314572800</value>  
+	    </property>
+	</bean>
+	
+	<!-- 配置全局异常 -->
+	<bean class="org.springframework.web.servlet.handler.SimpleMappingExceptionResolver">
+		<property name="exceptionMappings">
+			<props>
+				<prop key="java.lang.Exception">error/error</prop>
+			</props>
+		</property>
+         <!-- 设置日志输出级别，不定义则默认不输出警告等错误日志信息 -->     
+         <property name="warnLogCategory" value="WARN"></property>     
+	</bean> 
+</beans>
